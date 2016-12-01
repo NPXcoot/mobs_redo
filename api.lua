@@ -195,6 +195,19 @@ set_animation = function(self, type)
 
 			self.animation.current = "shoot"
 		end
+	elseif type == "die"
+	and self.animation.current ~= "die" then
+
+		if self.animation.die_start
+		and self.animation.die_end then
+
+			self.object:set_animation({
+				x = self.animation.die_start,
+				y = self.animation.die_end},
+				(self.animation.speed_die or self.animation.speed_normal), 0)
+
+			self.animation.current = "die"
+		end
 	end
 end
 
@@ -371,7 +384,22 @@ function check_for_death(self)
 	end
 
 	-- default death function
-	self.object:remove()
+	-- die_animation (if defined)
+	if self.die_anim then
+		self.attack = nil
+		self.v_start = false
+		self.timer = 0
+		self.blinktimer = 0
+		self.passive = true
+		self.state = "die"
+		set_velocity(self, 0)
+		set_animation(self, "die")
+		minetest.after(1, function(self)
+			self.object:remove()
+		end, self)
+	else
+		self.object:remove()
+	end
 
 	effect(pos, 20, "tnt_smoke.png")
 
@@ -2293,6 +2321,7 @@ minetest.register_entity(name, {
 	owner = def.owner or "",
 	order = def.order or "",
 	on_die = def.on_die,
+	die_anim = def.die_anim or false,
 	do_custom = def.do_custom,
 	jump_height = def.jump_height or 6,
 	jump_chance = def.jump_chance or 0,
